@@ -22,7 +22,12 @@ import MapMarker from "./map-marker";
 import RouteLayer from "./route-layer";
 import { ReactElement } from "react";
 
-const MapElements = ({ zoom, coords }: { zoom: number, coords: [number, number] }) => {
+interface MapElementsProps {
+  zoom: number;
+  coords: [number, number];
+}
+
+const MapElements = ({ zoom, coords }: MapElementsProps) => {
   const civilization: ReactElement[] = [];
   const wilderness: ReactElement[] = [];
   
@@ -33,13 +38,27 @@ const MapElements = ({ zoom, coords }: { zoom: number, coords: [number, number] 
       case TOWN:
       case FORT:
       case FARM:
-        civilization.push(<MapMarker key={index} marker={marker} zoom={zoom} index={index} />);
+        civilization.push(
+          <MapMarker 
+            key={index} 
+            marker={marker} 
+            zoom={zoom} 
+            index={index}
+          />
+        );
         break;
       case PORTAL:
       case DUNGEON:
       case CAVE:
       case UNKNOWN:
-        wilderness.push(<MapMarker key={index} marker={marker} zoom={zoom} index={index} />);
+        wilderness.push(
+          <MapMarker 
+            key={index} 
+            marker={marker} 
+            zoom={zoom} 
+            index={index}
+          />
+        );
         break;
       default:
         console.error("Invalid Location Type");
@@ -103,4 +122,5 @@ const MapElements = ({ zoom, coords }: { zoom: number, coords: [number, number] 
     </LayersControl>
   );
 };
+
 export default MapElements;

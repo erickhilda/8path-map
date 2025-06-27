@@ -17,18 +17,21 @@ interface MapMarkerProps {
   index: number;
 }
 
-const MapMarker = ({ marker, zoom, index }: MapMarkerProps) => {
+const MapMarker = ({ marker, zoom }: MapMarkerProps) => {
   const { name, type, location, description, link, major } = marker;
-  let icon = determineIcon({ type, major }, zoom);
+  const icon = determineIcon({ type, major }, zoom);
 
-  return !!icon ? (
-    <Marker position={location} icon={icon} id={index + name}>
-      {!!name ? <Tooltip>{name}</Tooltip> : null}
-      {!!description ? (
+  return icon ? (
+    <Marker 
+      position={location} 
+      icon={icon}
+    >
+      {name ? <Tooltip>{name}</Tooltip> : null}
+      {description ? (
         <Popup>
           {description}
           <br />
-          {!!link ? (
+          {link ? (
             <a href={link} target="_blank" rel="noreferrer">
               Wiki Page
             </a>

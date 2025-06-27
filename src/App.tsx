@@ -3,7 +3,6 @@ import { MapContainer } from 'react-leaflet';
 import { CRS } from 'leaflet';
 import EventComponent from './components/map/event-component';
 import MapElements from './components/map/map-elements';
-import './App.css'
 
 function App() {
   const [currentZoom, setZoomLevel] = useState(3);
