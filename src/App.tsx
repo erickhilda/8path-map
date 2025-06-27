@@ -1,17 +1,22 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { MapContainer } from 'react-leaflet';
 import { CRS } from 'leaflet';
 import EventComponent from './components/map/event-component';
 import MapElements from './components/map/map-elements';
+import MapToolbar from './components/map/map-toolbar';
 
 function App() {
   const [currentZoom, setZoomLevel] = useState(3);
   const updateZoom = (newZoomLevel: number) => setZoomLevel(newZoomLevel);
-  console.log("zoom", currentZoom);
 
   const [coords, setCoords] = useState<[number, number]>([-150.25, 178.5]);
   const updateCoords = (coords: [number, number]) => setCoords(coords);
-  console.log("coords", coords);
+
+  // Force refresh of map elements when markers are updated
+  const [markerUpdateKey, setMarkerUpdateKey] = useState(0);
+  const handleMarkerUpdate = useCallback(() => {
+    setMarkerUpdateKey(prev => prev + 1);
+  }, []);
 
   return (
     <div className='h-screen bg-amber-200'>
@@ -24,9 +29,18 @@ function App() {
         maxZoom={4}
         attributionControl={false}
       >
-        <MapElements zoom={currentZoom} coords={coords} />
+        <MapElements 
+          key={markerUpdateKey}
+          zoom={currentZoom} 
+          coords={coords} 
+        />
         <EventComponent updateZoom={updateZoom} updateCoords={updateCoords} />
       </MapContainer>
+      
+      <MapToolbar 
+        clickLocation={coords.length > 0 ? coords : null}
+        onMarkerAdded={handleMarkerUpdate}
+      />
     </div>
   )
 }

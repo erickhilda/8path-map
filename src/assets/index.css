@@ -6,14 +6,6 @@
   @apply border border-red-500;
 }
 
-.card {
-  padding: 2em;
-}
-
-.read-the-docs {
-  color: #888;
-}
-
 /* Custom map icon styles */
 .custom-icon {
   background: none;
@@ -47,4 +39,24 @@
 
 .custom-icon svg {
   color: #333;
+}
+
+/* Custom marker styles */
+.custom-marker {
+  border: 2px solid #3b82f6;
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.custom-marker div {
+  border-color: #3b82f6;
+  background: rgba(255, 255, 255, 0.95);
+}
+
+/* Modal and form styles */
+.modal-overlay {
+  backdrop-filter: blur(2px);
+}
+
+.form-input:focus {
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }

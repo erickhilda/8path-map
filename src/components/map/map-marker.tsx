@@ -1,15 +1,6 @@
 import { Marker, Popup, Tooltip } from "react-leaflet";
-
 import { determineIcon } from "./icons";
-
-interface MarkerData {
-  name: string;
-  type: string;
-  location: [number, number];
-  description?: string;
-  link?: string;
-  major: boolean;
-}
+import { MarkerData } from "../../data/markers";
 
 interface MapMarkerProps {
   marker: MarkerData;

@@ -16,11 +16,11 @@ import {
   UNKNOWN,
   VILLAGE,
 } from "./constants";
-import { markers } from "../../data/markers";
+import { getAllMarkers, MarkerData } from "../../data/markers";
 import { routes } from "../../data/routes";
 import MapMarker from "./map-marker";
 import RouteLayer from "./route-layer";
-import { ReactElement } from "react";
+import { ReactElement, useEffect, useState } from "react";
 
 interface MapElementsProps {
   zoom: number;
@@ -28,6 +28,13 @@ interface MapElementsProps {
 }
 
 const MapElements = ({ zoom, coords }: MapElementsProps) => {
+  const [markers, setMarkers] = useState<MarkerData[]>([]);
+
+  useEffect(() => {
+    // Load markers whenever the component mounts or when we need to refresh
+    setMarkers(getAllMarkers());
+  }, []);
+
   const civilization: ReactElement[] = [];
   const wilderness: ReactElement[] = [];
   
@@ -40,7 +47,7 @@ const MapElements = ({ zoom, coords }: MapElementsProps) => {
       case FARM:
         civilization.push(
           <MapMarker 
-            key={index} 
+            key={marker.id} 
             marker={marker} 
             zoom={zoom} 
             index={index}
@@ -53,7 +60,7 @@ const MapElements = ({ zoom, coords }: MapElementsProps) => {
       case UNKNOWN:
         wilderness.push(
           <MapMarker 
-            key={index} 
+            key={marker.id} 
             marker={marker} 
             zoom={zoom} 
             index={index}
