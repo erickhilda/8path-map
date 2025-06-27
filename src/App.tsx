@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { LayersControl, MapContainer, TileLayer } from 'react-leaflet';
+import { MapContainer } from 'react-leaflet';
 import { CRS } from 'leaflet';
 import EventComponent from './components/map/event-component';
+import MapElements from './components/map/map-elements';
 import './App.css'
 
 function App() {
@@ -24,12 +25,7 @@ function App() {
         maxZoom={4}
         attributionControl={false}
       >
-        <LayersControl position="topright">
-          <LayersControl.BaseLayer checked name="Basemap">
-            <TileLayer url="tiles/{z}/{x}/{y}.png" noWrap={true} />
-          </LayersControl.BaseLayer>
-        </LayersControl>
-        {/* <MapElements coords={coords} currentZoom={currentZoom} /> */}
+        <MapElements zoom={currentZoom} coords={coords} />
         <EventComponent updateZoom={updateZoom} updateCoords={updateCoords} />
       </MapContainer>
     </div>
