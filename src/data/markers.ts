@@ -150,7 +150,7 @@ export const addCustomMarker = (marker: Omit<MarkerData, 'id' | 'isCustom' | 'cr
   const customMarkers = getCustomMarkers();
   const newMarker: MarkerData = {
     ...marker,
-    id: `custom-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    id: `marker-${marker.type}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
     isCustom: true,
     createdAt: Date.now(),
   };

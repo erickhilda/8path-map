@@ -9,7 +9,6 @@ const EventComponent = ({
 }) => {
   useMapEvents({
     click: (e) => {
-      console.log(e.latlng);
       updateCoords([e.latlng.lat, e.latlng.lng]);
     },
     zoomend: (e) => {

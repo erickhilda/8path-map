@@ -6,6 +6,7 @@ import EventComponent from './components/map/event-component';
 import MapElements from './components/map/map-elements';
 import MapToolbar from './components/map/map-toolbar';
 import { AlertProvider } from './components/ui/alert-provider';
+import { AlertDialogProvider } from './components/ui/alert-dialog-provider';
 
 function App() {
   const [currentZoom, setZoomLevel] = useState(3);
@@ -46,6 +47,7 @@ function App() {
         />
         
         <AlertProvider />
+        <AlertDialogProvider />
       </div>
     </Provider>
   )
