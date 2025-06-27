@@ -9,7 +9,18 @@ import {
   CardTitle,
 } from "../ui/card";
 import { Button } from "../ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "../ui/alert-dialog";
 import { deleteCustomMarker, getCustomMarkers } from "../../data/markers";
+import { useAlert } from "../../hooks/useAlert";
 import {PiBookmarks, PiPlus, PiGear, PiMapTrifold, PiFileArrowDown, PiFileArrowUp, PiTrash, PiCamera, PiX} from "react-icons/pi"
 
 interface MapToolbarProps {
@@ -25,30 +36,48 @@ const MapToolbar = ({ clickLocation, onMarkerAdded }: MapToolbarProps) => {
   const [measurementDistance, setMeasurementDistance] = useState<number>(0);
   const [isMinimized, setIsMinimized] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Alert dialog states
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
+
+  // Use the global alert system
+  const { showInfo, showError, showSuccess } = useAlert();
 
   const handleAddMarker = () => {
     if (clickLocation) {
       setIsAddModalOpen(true);
     } else {
-      alert("Please click on the map to select a location first.");
+      showInfo(
+        "Location Required",
+        "Please click on the map to select a location first."
+      );
     }
   };
 
   const handleClearAllMarkers = () => {
-    if (window.confirm("Are you sure you want to delete ALL custom markers? This action cannot be undone.")) {
-      const customMarkers = getCustomMarkers();
-      customMarkers.forEach(marker => {
-        deleteCustomMarker(marker.id);
-      });
-      onMarkerAdded();
-      alert("All custom markers have been deleted.");
-    }
+    setShowClearConfirm(true);
+  };
+
+  const confirmClearAllMarkers = () => {
+    const customMarkers = getCustomMarkers();
+    customMarkers.forEach(marker => {
+      deleteCustomMarker(marker.id);
+    });
+    onMarkerAdded();
+    showSuccess(
+      "Markers Cleared",
+      "All custom markers have been deleted successfully."
+    );
+    setShowClearConfirm(false);
   };
 
   const handleExportMarkers = () => {
     const customMarkers = getCustomMarkers();
     if (customMarkers.length === 0) {
-      alert("No custom markers to export.");
+      showInfo(
+        "No Markers",
+        "No custom markers to export."
+      );
       return;
     }
 
@@ -60,6 +89,11 @@ const MapToolbar = ({ clickLocation, onMarkerAdded }: MapToolbarProps) => {
     link.download = 'custom-markers.json';
     link.click();
     URL.revokeObjectURL(url);
+    
+    showSuccess(
+      "Export Successful",
+      `${customMarkers.length} markers have been exported to custom-markers.json`
+    );
   };
 
   const handleImportMarkers = () => {
@@ -76,9 +110,15 @@ const MapToolbar = ({ clickLocation, onMarkerAdded }: MapToolbarProps) => {
         const markers = JSON.parse(e.target?.result as string);
         // Here you would add logic to import markers
         // For now, just show a message
-        alert(`Found ${markers.length} markers in file. Import functionality to be implemented.`);
+        showInfo(
+          "Import Preview",
+          `Found ${markers.length} markers in file. Import functionality to be implemented.`
+        );
       } catch (error) {
-        alert("Invalid file format. Please select a valid JSON file.");
+        showError(
+          "Invalid File",
+          "Invalid file format. Please select a valid JSON file."
+        );
       }
     };
     reader.readAsText(file);
@@ -86,7 +126,10 @@ const MapToolbar = ({ clickLocation, onMarkerAdded }: MapToolbarProps) => {
 
   const handleScreenshot = () => {
     // This would require html2canvas or similar library
-    alert("Screenshot functionality requires additional libraries. To be implemented.");
+    showInfo(
+      "Coming Soon",
+      "Screenshot functionality requires additional libraries. To be implemented."
+    );
   };
 
   const handleToggleMeasuring = () => {
@@ -94,26 +137,6 @@ const MapToolbar = ({ clickLocation, onMarkerAdded }: MapToolbarProps) => {
     if (isMeasuring) {
       setMeasurementPoints([]);
       setMeasurementDistance(0);
-    }
-  };
-
-  const handleMapClickForMeasurement = () => {
-    if (!isMeasuring || !clickLocation) return;
-    
-    const newPoints = [...measurementPoints, clickLocation];
-    setMeasurementPoints(newPoints);
-    
-    if (newPoints.length >= 2) {
-      // Calculate distance between last two points
-      const [lat1, lng1] = newPoints[newPoints.length - 2];
-      const [lat2, lng2] = newPoints[newPoints.length - 1];
-      
-      // Simple distance calculation (for more accuracy, use proper geodetic formulas)
-      const distance = Math.sqrt(
-        Math.pow(lat2 - lat1, 2) + Math.pow(lng2 - lng1, 2)
-      ) * 111; // Rough conversion to km
-      
-      setMeasurementDistance(measurementDistance + distance);
     }
   };
 
@@ -128,6 +151,24 @@ const MapToolbar = ({ clickLocation, onMarkerAdded }: MapToolbarProps) => {
 
   return (
     <>
+      {/* Clear All Markers Confirmation Dialog */}
+      <AlertDialog open={showClearConfirm} onOpenChange={setShowClearConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Clear All Markers</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete ALL custom markers? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmClearAllMarkers}>
+              Clear All
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <Card className={`absolute top-20 left-3 z-[1000] transition-all duration-300 ease-in-out delay-150 ${
         isMinimized ? 'w-fit h-fit' : 'w-64'
       }`}>
@@ -182,7 +223,7 @@ const MapToolbar = ({ clickLocation, onMarkerAdded }: MapToolbarProps) => {
                 <Button
                   onClick={() => setIsCustomMarkersPanelOpen(true)}
                   className="w-full"
-                  variant="secondary"
+                  variant="outline"
                   size="sm"
                 >
                   <PiBookmarks className="w-4 h-4 mr-2" />

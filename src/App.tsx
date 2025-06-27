@@ -1,9 +1,11 @@
 import { useState, useCallback } from 'react'
+import { Provider } from 'jotai'
 import { MapContainer } from 'react-leaflet';
 import { CRS } from 'leaflet';
 import EventComponent from './components/map/event-component';
 import MapElements from './components/map/map-elements';
 import MapToolbar from './components/map/map-toolbar';
+import { AlertProvider } from './components/ui/alert-provider';
 
 function App() {
   const [currentZoom, setZoomLevel] = useState(3);
@@ -19,29 +21,33 @@ function App() {
   }, []);
 
   return (
-    <div className='h-screen bg-amber-200'>
-      <MapContainer
-        center={[-100, 143.62]}
-        minZoom={1}
-        zoom={currentZoom}
-        style={{ height: window.innerHeight, width: window.innerWidth }}
-        crs={CRS.Simple}
-        maxZoom={4}
-        attributionControl={false}
-      >
-        <MapElements 
-          key={markerUpdateKey}
-          zoom={currentZoom} 
-          coords={coords} 
+    <Provider>
+      <div className='h-screen bg-amber-200'>
+        <MapContainer
+          center={[-100, 143.62]}
+          minZoom={1}
+          zoom={currentZoom}
+          style={{ height: window.innerHeight, width: window.innerWidth }}
+          crs={CRS.Simple}
+          maxZoom={4}
+          attributionControl={false}
+        >
+          <MapElements 
+            key={markerUpdateKey}
+            zoom={currentZoom} 
+            coords={coords} 
+          />
+          <EventComponent updateZoom={updateZoom} updateCoords={updateCoords} />
+        </MapContainer>
+        
+        <MapToolbar 
+          clickLocation={coords.length > 0 ? coords : null}
+          onMarkerAdded={handleMarkerUpdate}
         />
-        <EventComponent updateZoom={updateZoom} updateCoords={updateCoords} />
-      </MapContainer>
-      
-      <MapToolbar 
-        clickLocation={coords.length > 0 ? coords : null}
-        onMarkerAdded={handleMarkerUpdate}
-      />
-    </div>
+        
+        <AlertProvider />
+      </div>
+    </Provider>
   )
 }
 
