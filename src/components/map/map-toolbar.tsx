@@ -28,14 +28,27 @@ import {
   PiCamera,
   PiX,
 } from "react-icons/pi";
+import { cn } from "@/lib/utils";
 
 interface MapToolbarProps {
   clickLocation: [number, number] | null;
   onMarkerAdded: () => void;
+  isAddMarkerMode: boolean;
+  onToggleAddMarkerMode: () => void;
+  isAddModalOpen: boolean;
+  onCloseAddMarkerModal: () => void;
+  modalLocation: [number, number] | null;
 }
 
-const MapToolbar = ({ clickLocation, onMarkerAdded }: MapToolbarProps) => {
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+const MapToolbar = ({
+  clickLocation,
+  onMarkerAdded,
+  isAddMarkerMode,
+  onToggleAddMarkerMode,
+  isAddModalOpen,
+  onCloseAddMarkerModal,
+  modalLocation,
+}: MapToolbarProps) => {
   const [isCustomMarkersPanelOpen, setIsCustomMarkersPanelOpen] =
     useState(false);
   const [isMeasuring, setIsMeasuring] = useState(false);
@@ -50,15 +63,8 @@ const MapToolbar = ({ clickLocation, onMarkerAdded }: MapToolbarProps) => {
   const { showInfo, showError, showSuccess } = useAlert();
   const { showDeleteConfirm } = useAlertDialog();
 
-  const handleAddMarker = () => {
-    if (clickLocation) {
-      setIsAddModalOpen(true);
-    } else {
-      showInfo(
-        "Location Required",
-        "Please click on the map to select a location first."
-      );
-    }
+  const handleToggleAddMarkerMode = () => {
+    onToggleAddMarkerMode();
   };
 
   const handleClearAllMarkers = () => {
@@ -210,9 +216,10 @@ const MapToolbar = ({ clickLocation, onMarkerAdded }: MapToolbarProps) => {
   return (
     <>
       <Card
-        className={`absolute top-20 left-3 z-[1000] transition-all duration-300 ease-in-out delay-150 ${
+        className={cn(
+          "absolute top-20 left-3 z-[1000] transition-all duration-300 ease-in-out delay-150",
           isMinimized ? "w-fit h-fit" : "w-64"
-        }`}
+        )}
       >
         <CardHeader className={`p-3 ${isMinimized ? "hidden" : ""}`}>
           <div className="flex justify-between items-center">
@@ -232,19 +239,28 @@ const MapToolbar = ({ clickLocation, onMarkerAdded }: MapToolbarProps) => {
           </div>
         </CardHeader>
 
-        <CardContent className={`${isMinimized ? "p-0" : "space-y-3"}`}>
+        <CardContent className={cn(isMinimized ? "p-0" : "space-y-3")}>
           {isMinimized ? (
             // Minimized state - just show a button to expand
-            <div className="flex items-center justify-center h-full">
-              <Button
-                onClick={toggleMinimize}
-                variant="link"
-                size="icon"
-                title="Expand toolbar"
-              >
-                <PiGear className="w-4 h-4" />
-              </Button>
-            </div>
+            <>
+              {isAddMarkerMode && (
+                <span className="flex size-3 absolute -top-1 -right-1">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75"></span>
+                  <span className="relative inline-flex size-3 rounded-full bg-red-500"></span>
+                </span>
+              )}
+
+              <div className={cn("flex items-center justify-center h-full")}>
+                <Button
+                  onClick={toggleMinimize}
+                  variant="link"
+                  size="icon"
+                  title="Expand toolbar"
+                >
+                  <PiGear className="w-4 h-4" />
+                </Button>
+              </div>
+            </>
           ) : (
             // Expanded state - show all content
             <>
@@ -252,14 +268,13 @@ const MapToolbar = ({ clickLocation, onMarkerAdded }: MapToolbarProps) => {
               <div className="space-y-2">
                 <h3 className="text-sm font-semibold text-gray-700">Markers</h3>
                 <Button
-                  onClick={handleAddMarker}
-                  disabled={!clickLocation}
+                  onClick={handleToggleAddMarkerMode}
                   className="w-full"
-                  variant="default"
+                  variant={isAddMarkerMode ? "destructive" : "default"}
                   size="sm"
                 >
                   <PiPlus className="w-4 h-4 mr-2" />
-                  Add Marker
+                  {isAddMarkerMode ? "Cancel Add Marker" : "Add Marker"}
                 </Button>
 
                 <Button
@@ -384,9 +399,9 @@ const MapToolbar = ({ clickLocation, onMarkerAdded }: MapToolbarProps) => {
 
       <AddMarkerModal
         isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
+        onClose={onCloseAddMarkerModal}
         onMarkerAdded={onMarkerAdded}
-        clickLocation={clickLocation}
+        clickLocation={modalLocation}
       />
 
       <CustomMarkersPanel
