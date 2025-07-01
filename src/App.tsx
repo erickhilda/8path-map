@@ -22,6 +22,11 @@ function App() {
     null
   );
 
+  // Route drawing mode state
+  const [isDrawRouteMode, setIsDrawRouteMode] = useState(false);
+  const [routePath, setRoutePath] = useState<[number, number][]>([]);
+  const [isAddRouteModalOpen, setIsAddRouteModalOpen] = useState(false);
+
   // Force refresh of map elements when markers are updated
   const [markerUpdateKey, setMarkerUpdateKey] = useState(0);
   const handleMarkerUpdate = useCallback(() => {
@@ -30,6 +35,7 @@ function App() {
 
   const handleToggleAddMarkerMode = useCallback(() => {
     setIsAddMarkerMode((prev) => !prev);
+    setIsDrawRouteMode(false); // Exit route drawing mode
   }, []);
 
   const handleOpenAddMarkerModal = useCallback((location: [number, number]) => {
@@ -40,6 +46,35 @@ function App() {
   const handleCloseAddMarkerModal = useCallback(() => {
     setIsAddModalOpen(false);
     setModalLocation(null);
+  }, []);
+
+  // Route drawing handlers
+  const handleToggleDrawRouteMode = useCallback(() => {
+    setIsDrawRouteMode((prev) => !prev);
+    setIsAddMarkerMode(false); // Exit marker mode
+    if (!isDrawRouteMode) {
+      setRoutePath([]); // Clear route path when starting
+    }
+  }, [isDrawRouteMode]);
+
+  const handleAddRoutePoint = useCallback((location: [number, number]) => {
+    setRoutePath((prev) => [...prev, location]);
+  }, []);
+
+  const handleFinishRoute = useCallback(() => {
+    if (routePath.length >= 2) {
+      setIsAddRouteModalOpen(true);
+    }
+  }, [routePath]);
+
+  const handleCloseAddRouteModal = useCallback(() => {
+    setIsAddRouteModalOpen(false);
+    setRoutePath([]);
+    setIsDrawRouteMode(false);
+  }, []);
+
+  const handleRouteAdded = useCallback(() => {
+    setMarkerUpdateKey((prev) => prev + 1);
   }, []);
 
   return (
@@ -61,12 +96,17 @@ function App() {
             key={markerUpdateKey}
             zoom={currentZoom}
             coords={coords || [-150.25, 178.5]}
+            routePath={routePath}
+            isDrawRouteMode={isDrawRouteMode}
           />
           <EventComponent
             updateZoom={updateZoom}
             updateCoords={updateCoords}
             isAddMarkerMode={isAddMarkerMode}
+            isDrawRouteMode={isDrawRouteMode}
             onOpenAddMarkerModal={handleOpenAddMarkerModal}
+            onAddRoutePoint={handleAddRoutePoint}
+            onFinishRoute={handleFinishRoute}
           />
         </MapContainer>
 
@@ -78,6 +118,12 @@ function App() {
           isAddModalOpen={isAddModalOpen}
           onCloseAddMarkerModal={handleCloseAddMarkerModal}
           modalLocation={modalLocation}
+          isDrawRouteMode={isDrawRouteMode}
+          onToggleDrawRouteMode={handleToggleDrawRouteMode}
+          routePath={routePath}
+          isAddRouteModalOpen={isAddRouteModalOpen}
+          onCloseAddRouteModal={handleCloseAddRouteModal}
+          onRouteAdded={handleRouteAdded}
         />
 
         <AlertProvider />

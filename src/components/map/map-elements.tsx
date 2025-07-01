@@ -17,22 +17,27 @@ import {
   VILLAGE,
 } from "./constants";
 import { getAllMarkers, MarkerData } from "../../data/markers";
-import { routes } from "../../data/routes";
+import { getAllRoutes, Route } from "../../data/routes";
 import MapMarker from "./map-marker";
 import RouteLayer from "./route-layer";
+import RouteDrawingLayer from "./route-drawing-layer";
 import { ReactElement, useEffect, useState } from "react";
 
 interface MapElementsProps {
   zoom: number;
   coords: [number, number];
+  routePath?: [number, number][];
+  isDrawRouteMode?: boolean;
 }
 
-const MapElements = ({ zoom, coords }: MapElementsProps) => {
+const MapElements = ({ zoom, coords, routePath = [], isDrawRouteMode = false }: MapElementsProps) => {
   const [markers, setMarkers] = useState<MarkerData[]>([]);
+  const [routes, setRoutes] = useState<Route[]>([]);
 
   useEffect(() => {
-    // Load markers whenever the component mounts or when we need to refresh
+    // Load markers and routes whenever the component mounts or when we need to refresh
     setMarkers(getAllMarkers());
+    setRoutes(getAllRoutes());
   }, []);
 
   const civilization: ReactElement[] = [];
@@ -76,6 +81,7 @@ const MapElements = ({ zoom, coords }: MapElementsProps) => {
   const mainRoutes = routes.filter(route => route.type === 'main').map(route => route.id);
   const secondaryRoutes = routes.filter(route => route.type === 'secondary').map(route => route.id);
   const secretRoutes = routes.filter(route => route.type === 'secret').map(route => route.id);
+  const customRoutes = routes.filter(route => route.type === 'custom').map(route => route.id);
 
   return (
     <LayersControl position="topright">
@@ -117,6 +123,13 @@ const MapElements = ({ zoom, coords }: MapElementsProps) => {
         <RouteLayer routes={routes} visibleRoutes={secretRoutes} />
       </LayersControl.Overlay>
       
+      <LayersControl.Overlay
+        checked
+        name="Custom Routes"
+      >
+        <RouteLayer routes={routes} visibleRoutes={customRoutes} />
+      </LayersControl.Overlay>
+      
       <LayersControl.Overlay name="Click Location">
         {coords.length > 0 ? (
           <Marker position={coords}>
@@ -126,6 +139,9 @@ const MapElements = ({ zoom, coords }: MapElementsProps) => {
           </Marker>
         ) : null}
       </LayersControl.Overlay>
+      
+      {/* Route Drawing Layer */}
+      <RouteDrawingLayer routePath={routePath} isDrawing={isDrawRouteMode} />
     </LayersControl>
   );
 };

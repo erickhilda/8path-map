@@ -1,6 +1,8 @@
 import { useState, useRef } from "react";
 import AddMarkerModal from "./add-marker-modal";
+import AddRouteModal from "./add-route-modal";
 import CustomMarkersPanel from "./custom-markers-panel";
+import CustomRoutesPanel from "./custom-routes-panel";
 import {
   Card,
   CardContent,
@@ -15,18 +17,21 @@ import {
   deleteCustomMarker,
   getCustomMarkers,
 } from "../../data/markers";
+import {
+  getCustomRoutes,
+  deleteCustomRoute,
+} from "../../data/routes";
 import { useAlert } from "../../hooks/useAlert";
 import { useAlertDialog } from "../../hooks/useAlertDialog";
 import {
   PiBookmarks,
   PiPlus,
   PiGear,
-  PiMapTrifold,
   PiFileArrowDown,
   PiFileArrowUp,
   PiTrash,
-  PiCamera,
   PiX,
+  PiPath,
 } from "react-icons/pi";
 import { cn } from "@/lib/utils";
 
@@ -38,6 +43,12 @@ interface MapToolbarProps {
   isAddModalOpen: boolean;
   onCloseAddMarkerModal: () => void;
   modalLocation: [number, number] | null;
+  isDrawRouteMode: boolean;
+  onToggleDrawRouteMode: () => void;
+  routePath: [number, number][];
+  isAddRouteModalOpen: boolean;
+  onCloseAddRouteModal: () => void;
+  onRouteAdded: () => void;
 }
 
 const MapToolbar = ({
@@ -48,14 +59,22 @@ const MapToolbar = ({
   isAddModalOpen,
   onCloseAddMarkerModal,
   modalLocation,
+  isDrawRouteMode,
+  onToggleDrawRouteMode,
+  routePath,
+  isAddRouteModalOpen,
+  onCloseAddRouteModal,
+  onRouteAdded,
 }: MapToolbarProps) => {
   const [isCustomMarkersPanelOpen, setIsCustomMarkersPanelOpen] =
     useState(false);
-  const [isMeasuring, setIsMeasuring] = useState(false);
-  const [measurementPoints, setMeasurementPoints] = useState<
-    [number, number][]
-  >([]);
-  const [measurementDistance, setMeasurementDistance] = useState<number>(0);
+  const [isCustomRoutesPanelOpen, setIsCustomRoutesPanelOpen] =
+    useState(false);
+  // const [isMeasuring, setIsMeasuring] = useState(false);
+  // const [measurementPoints, setMeasurementPoints] = useState<
+  //   [number, number][]
+  // >([]);
+  // const [measurementDistance, setMeasurementDistance] = useState<number>(0);
   const [isMinimized, setIsMinimized] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -85,6 +104,24 @@ const MapToolbar = ({
     );
   };
 
+  const handleClearAllRoutes = () => {
+    showDeleteConfirm(
+      "Clear All Routes",
+      "Are you sure you want to delete ALL custom routes? This action cannot be undone.",
+      () => {
+        const customRoutes = getCustomRoutes();
+        customRoutes.forEach((route) => {
+          deleteCustomRoute(route.id);
+        });
+        onRouteAdded();
+        showSuccess(
+          "Routes Cleared",
+          "All custom routes have been deleted successfully."
+        );
+      }
+    );
+  };
+
   const handleExportMarkers = () => {
     const customMarkers = getCustomMarkers();
     if (customMarkers.length === 0) {
@@ -104,6 +141,28 @@ const MapToolbar = ({
     showSuccess(
       "Export Successful",
       `${customMarkers.length} markers have been exported to custom-markers.json`
+    );
+  };
+
+  const handleExportRoutes = () => {
+    const customRoutes = getCustomRoutes();
+    if (customRoutes.length === 0) {
+      showInfo("No Routes", "No custom routes to export.");
+      return;
+    }
+
+    const dataStr = JSON.stringify(customRoutes, null, 2);
+    const dataBlob = new Blob([dataStr], { type: "application/json" });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "custom-routes.json";
+    link.click();
+    URL.revokeObjectURL(url);
+
+    showSuccess(
+      "Export Successful",
+      `${customRoutes.length} routes have been exported to custom-routes.json`
     );
   };
 
@@ -188,26 +247,26 @@ const MapToolbar = ({
     }
   };
 
-  const handleScreenshot = () => {
-    // This would require html2canvas or similar library
-    showInfo(
-      "Coming Soon",
-      "Screenshot functionality requires additional libraries. To be implemented."
-    );
-  };
+  // const handleScreenshot = () => {
+  //   // This would require html2canvas or similar library
+  //   showInfo(
+  //     "Coming Soon",
+  //     "Screenshot functionality requires additional libraries. To be implemented."
+  //   );
+  // };
 
-  const handleToggleMeasuring = () => {
-    setIsMeasuring(!isMeasuring);
-    if (isMeasuring) {
-      setMeasurementPoints([]);
-      setMeasurementDistance(0);
-    }
-  };
+  // const handleToggleMeasuring = () => {
+  //   setIsMeasuring(!isMeasuring);
+  //   if (isMeasuring) {
+  //     setMeasurementPoints([]);
+  //     setMeasurementDistance(0);
+  //   }
+  // };
 
-  const clearMeasurement = () => {
-    setMeasurementPoints([]);
-    setMeasurementDistance(0);
-  };
+  // const clearMeasurement = () => {
+  //   setMeasurementPoints([]);
+  //   setMeasurementDistance(0);
+  // };
 
   const toggleMinimize = () => {
     setIsMinimized(!isMinimized);
@@ -243,7 +302,7 @@ const MapToolbar = ({
           {isMinimized ? (
             // Minimized state - just show a button to expand
             <>
-              {isAddMarkerMode && (
+              {(isAddMarkerMode || isDrawRouteMode) && (
                 <span className="flex size-3 absolute -top-1 -right-1">
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75"></span>
                   <span className="relative inline-flex size-3 rounded-full bg-red-500"></span>
@@ -288,8 +347,42 @@ const MapToolbar = ({
                 </Button>
               </div>
 
-              {/* Measurement Tools */}
+              {/* Route Management */}
               <div className="space-y-2">
+                <h3 className="text-sm font-semibold text-gray-700">Routes</h3>
+                <Button
+                  onClick={onToggleDrawRouteMode}
+                  className="w-full"
+                  variant={isDrawRouteMode ? "destructive" : "default"}
+                  size="sm"
+                >
+                  <PiPath className="w-4 h-4 mr-2" />
+                  {isDrawRouteMode ? "Cancel Draw Route" : "Draw Route"}
+                </Button>
+
+                {isDrawRouteMode && (
+                  <div className="bg-blue-50 p-2 rounded text-xs">
+                    <p>Click on map to add route points</p>
+                    <p>Double-click to finish route</p>
+                    {routePath.length > 0 && (
+                      <p>Points: {routePath.length}</p>
+                    )}
+                  </div>
+                )}
+
+                <Button
+                  onClick={() => setIsCustomRoutesPanelOpen(true)}
+                  className="w-full"
+                  variant="outline"
+                  size="sm"
+                >
+                  <PiBookmarks className="w-4 h-4 mr-2" />
+                  My Routes
+                </Button>
+              </div>
+
+              {/* Measurement Tools */}
+              {/* <div className="space-y-2">
                 <h3 className="text-sm font-semibold text-gray-700">Tools</h3>
                 <Button
                   onClick={handleToggleMeasuring}
@@ -321,7 +414,7 @@ const MapToolbar = ({
                     </Button>
                   </div>
                 )}
-              </div>
+              </div> */}
 
               {/* Data Management */}
               <div className="space-y-2">
@@ -334,6 +427,16 @@ const MapToolbar = ({
                 >
                   <PiFileArrowDown className="w-4 h-4 mr-2" />
                   Export Markers
+                </Button>
+
+                <Button
+                  onClick={handleExportRoutes}
+                  className="w-full"
+                  variant="outline"
+                  size="sm"
+                >
+                  <PiFileArrowDown className="w-4 h-4 mr-2" />
+                  Export Routes
                 </Button>
 
                 <Button
@@ -355,10 +458,20 @@ const MapToolbar = ({
                   <PiTrash className="w-4 h-4 mr-2" />
                   Clear All Markers
                 </Button>
+
+                <Button
+                  onClick={handleClearAllRoutes}
+                  className="w-full"
+                  variant="destructive"
+                  size="sm"
+                >
+                  <PiTrash className="w-4 h-4 mr-2" />
+                  Clear All Routes
+                </Button>
               </div>
 
               {/* Utilities */}
-              <div className="space-y-2">
+              {/* <div className="space-y-2">
                 <h3 className="text-sm font-semibold text-gray-700">
                   Utilities
                 </h3>
@@ -372,7 +485,7 @@ const MapToolbar = ({
                   <PiCamera className="w-4 h-4 mr-2" />
                   Screenshot
                 </Button>
-              </div>
+              </div> */}
 
               {/* Selected Location Display */}
               {clickLocation && (
@@ -404,10 +517,23 @@ const MapToolbar = ({
         clickLocation={modalLocation}
       />
 
+      <AddRouteModal
+        isOpen={isAddRouteModalOpen}
+        onClose={onCloseAddRouteModal}
+        routePath={routePath}
+        onRouteAdded={onRouteAdded}
+      />
+
       <CustomMarkersPanel
         isOpen={isCustomMarkersPanelOpen}
         onClose={() => setIsCustomMarkersPanelOpen(false)}
         onMarkerUpdated={onMarkerAdded}
+      />
+
+      <CustomRoutesPanel
+        isOpen={isCustomRoutesPanelOpen}
+        onClose={() => setIsCustomRoutesPanelOpen(false)}
+        onRouteUpdated={onRouteAdded}
       />
     </>
   );
