@@ -31,7 +31,7 @@ export const showAlertDialogAtom = atom(
       cancelLabel: dialog.cancelLabel || 'Cancel',
       variant: dialog.variant || 'default',
     };
-    
+
     set(alertDialogAtom, newDialog);
     set(alertDialogIdCounterAtom, counter + 1);
   }
@@ -40,7 +40,7 @@ export const showAlertDialogAtom = atom(
 // Function to hide the alert dialog
 export const hideAlertDialogAtom = atom(
   null,
-  (get, set) => {
+  (_get, set) => {
     set(alertDialogAtom, null);
   }
 );

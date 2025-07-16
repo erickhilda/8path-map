@@ -30,10 +30,10 @@ export const addAlertAtom = atom(
       id: generateAlertId(counter),
       timestamp: Date.now(),
     };
-    
+
     set(alertsAtom, [...currentAlerts, newAlert]);
     set(alertIdCounterAtom, counter + 1);
-    
+
     // Auto-remove alert after 5 seconds
     setTimeout(() => {
       set(removeAlertAtom, newAlert.id);
@@ -53,7 +53,7 @@ export const removeAlertAtom = atom(
 // Function to clear all alerts
 export const clearAlertsAtom = atom(
   null,
-  (get, set) => {
+  (_get, set) => {
     set(alertsAtom, []);
   }
 ); 
